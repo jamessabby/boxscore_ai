@@ -1,73 +1,50 @@
 from nba_api.stats.endpoints import leaguegamelog
 import pandas as pd
+import requests
+from database import init_db
 import sqlite3
 
-gamelog = leaguegamelog.LeagueGameLog(season="2025-26")
+# creates boxscore_ai.db and games table
+init_db()
 
+gamelog = leaguegamelog.LeagueGameLog(season="2024-25")
 df = gamelog.get_data_frames()[0]
-print(df.info())
-df.to_csv("leaguegamelog.csv", index=False)
 
-data = pd.read_csv("leaguegamelog.csv")
-# print(data.columns.tolist())
-
-filtered_data = pd.read_csv(
-    "leaguegamelog.csv",
-    usecols=[
-        "SEASON_ID",
-        "TEAM_ID",
-        "TEAM_ABBREVIATION",
-        "GAME_ID",
-        "GAME_DATE",
-        "MATCHUP",
-        "WL",
-        "PTS",
-        "AST",
-        "STL",
-        "BLK",
-        "TOV",
-        "FGM",
-        "FGA",
-        "FG_PCT",
-        "FG3M",
-        "FG3A",
-        "FTM",
-        "FTA",
-    ],
-)
-# print(filtered_data.info())
+cols = [
+    "GAME_ID",
+    "TEAM_ID",
+    "SEASON_ID",
+    "GAME_DATE",
+    "TEAM_ABBREVIATION",
+    "MATCHUP",
+    "WL",
+    "PTS",
+    "AST",
+    "STL",
+    "BLK",
+    "TOV",
+    "FGM",
+    "FGA",
+    "FG_PCT",
+    "FG3M",
+    "FG3A",
+    "FTM",
+    "FTA",
+    "OREB",
+    "DREB",
+    "REB",
+]
+filtered_df = df[cols].copy()
 
 conn = sqlite3.connect("boxscore_ai.db")
-cursor = conn.cursor()
 
-cursor.execute(
-    """
-    CREATE TABLE IF NOT EXISTS games (
-        GAME_ID INT NOT NULL, 
-        TEAM_ID INT NOT NULL,
-        SEASON_ID INT NOT NULL,
-        GAME_DATE DATE NOT NULL,
-        TEAM_ABBREVIATION TEXT,
-        MATCHUP TEXT NOT NULL, 
-        WL TEXT NOT NULL,
-        PTS INT NOT NULL,
-        AST INT NOT NULL,
-        STL INT NOT NULL,
-        BLK INT NOT NULL,
-        TOV INT NOT NULL,
-        FGM INT NOT NULL,
-        FGA INT NOT NULL, 
-        FG_PCT REAL NOT NULL,
-        FG3M INT NOT NULL,
-        FG3A INT NOT NULL,
-        FTM INT NOT NULL, 
-        FTA INT NOT NULL,
-        PRIMARY KEY (GAME_ID, TEAM_ID)
-    )
-    """
-)
+filtered_df["GAME_ID"] = filtered_df["GAME_ID"].astype(int)
 
-filtered_data.to_sql("games", conn, if_exists="append", index=False)
+saved_ids = pd.read_sql("SELECT GAME_ID FROM games", conn)["GAME_ID"]
+
+new_games = filtered_df[~filtered_df["GAME_ID"].isin(saved_ids)]
+
+new_games.to_sql("games", conn, if_exists="append", index=False)
 
 conn.commit()
 conn.close()
