@@ -12,4 +12,6 @@ class Base(DeclarativeBase):
 def init_db():
     import models
 
-    Base.metadata.create_all(engine)
+    Base.metadata.create_all(
+        engine
+    )  # takes the model structure and generates the sql stamement to create a table in SQLite
