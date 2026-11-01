@@ -40,7 +40,7 @@ conn = sqlite3.connect("boxscore_ai.db")
 
 filtered_df["GAME_ID"] = filtered_df["GAME_ID"].astype(
     int
-)  # matches the data type in models.py where game_id is an integer
+)  # matches the data type in models.py by converting where game_id is an integer
 
 saved_ids = pd.read_sql("SELECT GAME_ID FROM games", conn)[
     "GAME_ID"
