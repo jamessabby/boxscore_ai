@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase
 
 DATABASE_URL = "sqlite:///boxscore_ai.db"
-engine = create_engine(DATABASE_URL)
+engine = create_engine(DATABASE_URL)    # middleman of sqlalchemy and database
 
 
 class Base(DeclarativeBase):
@@ -10,7 +10,7 @@ class Base(DeclarativeBase):
 
 
 def init_db():
-    import models
+    import models   # loads model classes (Games table) into python
 
     Base.metadata.create_all(
         engine
